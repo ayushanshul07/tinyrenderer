@@ -69,7 +69,10 @@ Vec3f barycentric_cordinates(Vec2i P, Vec2i A, Vec2i B, Vec2i C){
 
 }
 
-void draw_triangle(Vec2i A, Vec2i B, Vec2i C, TGAImage& im, TGAColor col){
+void draw_triangle(	Vec2i A, Vec3f A1,
+					Vec2i B, Vec3f B1,
+					Vec2i C, Vec3f C1,
+					float* zbuff, TGAImage& im, TGAColor col){
 
 	const int widlt = im.get_width()-1; // width limit
 	const int heilt = im.get_height()-1; // height limit
@@ -97,10 +100,17 @@ void draw_triangle(Vec2i A, Vec2i B, Vec2i C, TGAImage& im, TGAColor col){
 
 	for(int i = bboxmin.y; i <= bboxmax.y; ++i){
 		for(int j = bboxmin.x; j <= bboxmax.x; ++j){
-			Vec2i P(j,i);
-			Vec3f coords = barycentric_cordinates(P,A,B,C);
+			Vec3f P(j,i,0.0);
+			Vec2i P1(j,i);
+			Vec3f coords = barycentric_cordinates(P1,A,B,C);
+			P.z += A1.z * coords.raw[0];
+			P.z += B1.z * coords.raw[1];
+			P.z += C1.z * coords.raw[2];
 			if(coords.x < 0 ||  coords.y < 0 || coords.z < 0 ) continue;
-			im.set(j, i, col);
+			if(zbuff[(int)(P.x + P.y * width)] < P.z){
+				zbuff[(int)(P.x + P.y * width)] = P.z;
+				im.set(P.x, P.y, col);
+			}
 		}
 	}
 
@@ -115,6 +125,10 @@ int main(int argc, char** argv) {
 
 	ObjParser parser("");
 	parser.parse();
+
+	float* zbuffer = new float[width * height];
+	int num_pix = width * height;
+	while(--num_pix) zbuffer[num_pix] = -1000000.0; // large negative value
 
 	for(int i = 0; i < parser.faces.size(); ++i){
 		Vec3i tri = parser.faces[i];
@@ -131,7 +145,7 @@ int main(int argc, char** argv) {
 
 		float intensity = n * light_dir; // dot product
 		if(intensity > 0)
-			draw_triangle(A, B, C, image, TGAColor(255*intensity, 255*intensity, 255*intensity, 255));
+			draw_triangle(A, A1, B, B1, C, C1, zbuffer, image, TGAColor(255*intensity, 255*intensity, 255*intensity, 255));
 	}
 
 	image.flip_vertically(); // i want to have the origin at the left bottom corner of the image
