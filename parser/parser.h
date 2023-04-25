@@ -17,6 +17,8 @@ class ObjParser{
     public:
         std::vector<Vec3f> triangles;
         std::vector<Vec3i> faces;
+        std::vector<Vec2f> textures;
+        std::vector<Vec3i> texture_faces;
         ObjParser(const std::string&);
         void parse();
 };

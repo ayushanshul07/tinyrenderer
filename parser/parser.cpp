@@ -17,18 +17,29 @@ void ObjParser::parse(){
                 for(int i = 0; i < 3; ++i) iss >> v.raw[i];
                 triangles.push_back(v);
             }
+            else if(!line.compare(0, 3, "vt ")){
+                char trash;
+                iss >> trash >> trash;
+                Vec2f v;
+                for(int i = 0; i < 2; ++i) iss >> v.raw[i];
+                textures.push_back(v);
+            }
             else if(!line.compare(0, 2, "f ")){
-                char trash; int itrash;
+                char trash; int itrash1; int itrash2;
                 iss >> trash;
                 int idx;
                 Vec3i v;
+                Vec3i t;
                 int counter = 0;
-                while(iss >> idx >> trash >> itrash >> trash >> itrash){
+                while(iss >> idx >> trash >> itrash1 >> trash >> itrash2){
                     --idx;
+                    --itrash1;
                     v.raw[counter] = idx;
+                    t.raw[counter] = itrash1;
                     ++counter;
                 }
                 faces.push_back(v);
+                texture_faces.push_back(t);
             }
         }
 
